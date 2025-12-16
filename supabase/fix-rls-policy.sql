@@ -22,3 +22,4 @@ CREATE POLICY "Allow signup insert"
 -- Note: After testing, you may want to restrict this further
 -- For production, use service role key in the API route instead
 
+

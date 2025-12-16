@@ -73,9 +73,21 @@ export default function CheckInPage() {
 
   const submitCheckIn = async (fullTranscript: string) => {
     try {
+      // Get current session for auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        setError('Session expired. Please sign in again.');
+        router.push('/auth/signin');
+        return;
+      }
+
       const response = await fetch('/api/checkin', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({ transcript: fullTranscript.trim() }),
       });
 
@@ -92,7 +104,10 @@ export default function CheckInPage() {
       // Generate today's summary
       await fetch('/api/summary', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({}),
       });
 
@@ -183,11 +198,15 @@ export default function CheckInPage() {
                 </div>
               )}
 
-              {isListening && (
-                <Button onClick={handleStopListening} variant="danger" size="lg">
-                  ⏹️ Stop & Submit
-                </Button>
-              )}
+              {/* Always show stop button when in listening step */}
+              <Button 
+                onClick={handleStopListening} 
+                variant="danger" 
+                size="lg"
+                className="mt-4"
+              >
+                ⏹️ Stop & Submit
+              </Button>
             </div>
           )}
 
