@@ -168,9 +168,38 @@ export default function DashboardPage() {
               {alerts.map((alert: any) => (
                 <div
                   key={alert.id}
-                  className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded"
+                  className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded flex justify-between items-center"
                 >
                   <p className="text-yellow-800 font-medium">⚠️ {alert.message}</p>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={async () => {
+                      try {
+                        const { data: { session } } = await supabase.auth.getSession();
+                        if (!session) return;
+                        
+                        await supabase
+                          .from('stock_alerts')
+                          .update({ is_resolved: true })
+                          .eq('id', alert.id);
+                        
+                        // Refresh alerts
+                        const { data: alertsData } = await supabase
+                          .from('stock_alerts')
+                          .select('*, medication:medications(*)')
+                          .eq('user_id', user!.id)
+                          .eq('is_resolved', false)
+                          .order('created_at', { ascending: false });
+                        
+                        setAlerts(alertsData || []);
+                      } catch (err) {
+                        console.error('Error resolving alert:', err);
+                      }
+                    }}
+                  >
+                    Resolve
+                  </Button>
                 </div>
               ))}
             </div>

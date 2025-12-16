@@ -44,7 +44,18 @@ export default function MedicationsPage() {
 
   const fetchMedications = async () => {
     try {
-      const response = await fetch('/api/medications');
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        router.push('/auth/signin');
+        return;
+      }
+
+      const response = await fetch('/api/medications', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
       const data = await response.json();
       if (response.ok) {
         setMedications(data.medications || []);
@@ -78,9 +89,19 @@ export default function MedicationsPage() {
     setSuccess('');
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        setError('Not authenticated');
+        return;
+      }
+
       const response = await fetch('/api/medications', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify(formData),
       });
 
@@ -110,9 +131,16 @@ export default function MedicationsPage() {
     status: 'taken' | 'later' | 'skipped'
   ) => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) return;
+
       const response = await fetch('/api/medications/log', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
           medication_id: medicationId,
           status,
@@ -138,8 +166,15 @@ export default function MedicationsPage() {
     if (!confirm('Are you sure you want to delete this medication?')) return;
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) return;
+
       const response = await fetch(`/api/medications?id=${medicationId}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
       });
 
       if (!response.ok) {
