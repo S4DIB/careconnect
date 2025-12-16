@@ -17,12 +17,41 @@ export function useAudioRecorder() {
   const startRecording = useCallback(async () => {
     try {
       // Request microphone permission
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100,
+        } 
+      });
       
-      // Create MediaRecorder
-      const mediaRecorder = new MediaRecorder(stream);
+      // Use the most compatible format for Chrome/Edge
+      // audio/webm with opus codec is widely supported
+      let mimeType = 'audio/webm';
+      let options: MediaRecorderOptions = {};
+      
+      // Try different formats in order of compatibility
+      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        mimeType = 'audio/webm;codecs=opus';
+        options = { mimeType, audioBitsPerSecond: 128000 };
+      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+        mimeType = 'audio/webm';
+        options = { mimeType, audioBitsPerSecond: 128000 };
+      } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
+        mimeType = 'audio/ogg;codecs=opus';
+        options = { mimeType };
+      } else {
+        // Fallback to default
+        options = {};
+      }
+      
+      // Create MediaRecorder with best supported format
+      const mediaRecorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
+      
+      console.log('Recording with MIME type:', mimeType);
+      console.log('MediaRecorder options:', options);
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -31,7 +60,7 @@ export function useAudioRecorder() {
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const blob = new Blob(chunksRef.current, { type: mimeType });
         setAudioBlob(blob);
         setAudioURL(URL.createObjectURL(blob));
         

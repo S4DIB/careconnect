@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Audio Format Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .supported { background-color: #d4edda; color: #155724; }
+        .not-supported { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>Browser Audio Format Support Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        const formats = [
+            'audio/webm',
+            'audio/webm;codecs=opus',
+            'audio/webm;codecs=vp9',
+            'audio/ogg;codecs=opus',
+            'audio/mp4',
+            'audio/mpeg',
+            'audio/wav',
+        ];
+        
+        const resultsDiv = document.getElementById('results');
+        
+        formats.forEach(format => {
+            const supported = MediaRecorder.isTypeSupported(format);
+            const div = document.createElement('div');
+            div.className = `result ${supported ? 'supported' : 'not-supported'}`;
+            div.textContent = `${format}: ${supported ? '✅ SUPPORTED' : '❌ NOT SUPPORTED'}`;
+            resultsDiv.appendChild(div);
+        });
+        
+        // Also test HTML5 audio playback
+        const audio = document.createElement('audio');
+        const playbackFormats = [
+            { type: 'audio/webm', ext: 'webm' },
+            { type: 'audio/ogg', ext: 'ogg' },
+            { type: 'audio/mpeg', ext: 'mp3' },
+            { type: 'audio/mp4', ext: 'mp4' },
+        ];
+        
+        resultsDiv.innerHTML += '<h2>HTML5 Audio Playback Support</h2>';
+        playbackFormats.forEach(format => {
+            const canPlay = audio.canPlayType(format.type);
+            const div = document.createElement('div');
+            div.className = `result ${canPlay ? 'supported' : 'not-supported'}`;
+            div.textContent = `${format.type}: ${canPlay || 'NO'}`;
+            resultsDiv.appendChild(div);
+        });
+    </script>
+</body>
+</html>
+

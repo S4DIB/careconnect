@@ -10,8 +10,27 @@ CareConnect is a full-stack web application built for a university software engi
 - **Medication reminder system** with browser notifications
 - **Automated daily health summaries** (rule-based analysis)
 - **Two-way voice messaging** between elderly users and caregivers
-- **Caregiver dashboard** to monitor linked users
+- **Comprehensive caregiver dashboard** with advanced monitoring
+- **Real-time alerts & notifications** for caregivers
+- **Medication adherence tracking** with weekly/monthly reports
 - **Privacy & security** with Supabase Row Level Security
+
+## 👩‍⚕️ Complete Caregiver Features
+
+✅ **All 10 caregiver features are fully implemented!**
+
+1. ✅ Account & Authentication (Email + Google OAuth)
+2. ✅ User Linking & Access Control
+3. ✅ Daily Health Monitoring (7-day summaries)
+4. ✅ Medication Monitoring & Supervision (adherence reports)
+5. ✅ Alerts & Notifications (low stock, skipped meds, health concerns)
+6. ✅ Two-Way Voice Communication
+7. ✅ Voice Message History
+8. ✅ Time-Aware Coordination
+9. ✅ Privacy & Security (RLS policies)
+10. ✅ Health Oversight & Decision Support
+
+**See [CAREGIVER_FEATURES.md](CAREGIVER_FEATURES.md) for complete documentation.**
 
 ## 🛠️ Tech Stack
 
@@ -58,9 +77,14 @@ npm install
 1. Go to [supabase.com](https://supabase.com) and create a new project
 2. Wait for the database to initialize (takes ~2 minutes)
 3. Go to **SQL Editor** in your Supabase dashboard
-4. Copy and paste the entire contents of `supabase/schema.sql`
-5. Click **Run** to execute the SQL
-6. Go to **Storage** and verify the `voice-messages` bucket was created
+4. Run these SQL scripts **in order**:
+   - `supabase/schema.sql` - Creates all tables and basic RLS policies
+   - `supabase/fix-caregiver-links.sql` - Adds caregiver linking policies ✅ **REQUIRED**
+   - `supabase/caregiver-alerts-rls.sql` - Adds alert monitoring policies ✅ **REQUIRED**
+5. Go to **Storage** → **Create new bucket**:
+   - Name: `voice-messages`
+   - Public: ✅ **YES**
+   - Click **Create bucket**
 
 ### 4. Configure Environment Variables
 

@@ -1,17 +1,29 @@
 // API route for voice messages
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerClient();
+    // Get auth token from header
+    const authHeader = request.headers.get('Authorization');
+    
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: authHeader ? { Authorization: authHeader } : {},
+        },
+      }
+    );
 
     // Get authenticated user
     const {
       data: { user },
+      error: authError,
     } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -29,11 +41,15 @@ export async function POST(request: NextRequest) {
 
     // Upload audio to Supabase Storage
     const fileName = `${user.id}/${Date.now()}-${audioFile.name}`;
+    
+    console.log('Uploading file:', fileName, 'Type:', audioFile.type, 'Size:', audioFile.size);
+    
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('voice-messages')
       .upload(fileName, audioFile, {
-        contentType: audioFile.type,
+        contentType: audioFile.type || 'audio/webm',
         upsert: false,
+        cacheControl: '3600',
       });
 
     if (uploadError) {
@@ -72,14 +88,26 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createServerClient();
+    // Get auth token from header
+    const authHeader = request.headers.get('Authorization');
+    
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: authHeader ? { Authorization: authHeader } : {},
+        },
+      }
+    );
 
     // Get authenticated user
     const {
       data: { user },
+      error: authError,
     } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -102,14 +130,26 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const supabase = createServerClient();
+    // Get auth token from header
+    const authHeader = request.headers.get('Authorization');
+    
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: authHeader ? { Authorization: authHeader } : {},
+        },
+      }
+    );
 
     // Get authenticated user
     const {
       data: { user },
+      error: authError,
     } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

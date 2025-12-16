@@ -114,14 +114,34 @@ export async function GET(request: NextRequest) {
 
     // Get query parameters
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('user_id') || user.id;
+    const requestedUserId = searchParams.get('user_id');
     const limit = parseInt(searchParams.get('limit') || '7');
+
+    let targetUserId = user.id;
+
+    // If requesting another user's data, verify caregiver link
+    if (requestedUserId && requestedUserId !== user.id) {
+      const { data: link } = await supabase
+        .from('caregiver_links')
+        .select('id')
+        .eq('caregiver_id', user.id)
+        .eq('elderly_user_id', requestedUserId)
+        .single();
+
+      if (!link) {
+        return NextResponse.json(
+          { error: 'You are not authorized to view this user\'s data' },
+          { status: 403 }
+        );
+      }
+      targetUserId = requestedUserId;
+    }
 
     // Fetch summaries
     const { data, error } = await supabase
       .from('daily_summaries')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', targetUserId)
       .order('date', { ascending: false })
       .limit(limit);
 

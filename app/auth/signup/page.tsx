@@ -77,13 +77,17 @@ export default function SignUpPage() {
     setLoading(true);
 
     try {
-      // Store role in session storage for callback
+      // Store role in multiple places to ensure it persists
       sessionStorage.setItem('pending_role', formData.role);
+      localStorage.setItem('pending_role', formData.role);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback?role=${formData.role}`,
+          queryParams: {
+            prompt: 'select_account', // Always show account chooser
+          },
         },
       });
 

@@ -55,10 +55,23 @@ export default function MessagesPage() {
 
   const fetchMessages = async () => {
     try {
-      const response = await fetch('/api/messages');
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch('/api/messages', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
       const data = await response.json();
       if (response.ok) {
         setMessages(data.messages || []);
+      } else {
+        console.error('Error fetching messages:', data.error);
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -69,10 +82,20 @@ export default function MessagesPage() {
 
   const fetchLinkedUsers = async () => {
     try {
-      const response = await fetch('/api/caregiver/links');
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) return;
+
+      const response = await fetch('/api/caregiver/links', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
       const data = await response.json();
       if (response.ok) {
         setLinkedUsers(data.links || []);
+      } else {
+        console.error('Error fetching linked users:', data.error);
       }
     } catch (error) {
       console.error('Error fetching linked users:', error);
@@ -93,13 +116,27 @@ export default function MessagesPage() {
     setSuccess('');
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        setError('Not authenticated');
+        return;
+      }
+
       const formData = new FormData();
-      formData.append('audio', recordedAudio.blob, 'voice-message.webm');
+      // Use the blob's actual type for the file extension
+      const fileExtension = recordedAudio.blob.type.includes('ogg') ? 'ogg' : 
+                           recordedAudio.blob.type.includes('mp4') ? 'mp4' : 'webm';
+      console.log('Uploading audio with type:', recordedAudio.blob.type, 'extension:', fileExtension);
+      formData.append('audio', recordedAudio.blob, `voice-message.${fileExtension}`);
       formData.append('recipient_id', selectedRecipient);
       formData.append('duration_seconds', recordedAudio.duration.toString());
 
       const response = await fetch('/api/messages', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: formData,
       });
 
@@ -122,9 +159,16 @@ export default function MessagesPage() {
 
   const handleMarkAsRead = async (messageId: string) => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) return;
+
       await fetch('/api/messages', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({ id: messageId, is_read: true }),
       });
       fetchMessages();
@@ -277,10 +321,22 @@ export default function MessagesPage() {
                     controls
                     src={message.audio_url}
                     className="w-full mt-2"
+                    preload="metadata"
+                    crossOrigin="anonymous"
                     onPlay={() => {
                       if (isUnread) {
                         handleMarkAsRead(message.id);
                       }
+                    }}
+                    onError={(e) => {
+                      console.error('Audio playback error:', e);
+                      console.error('Audio URL:', message.audio_url);
+                      const target = e.target as HTMLAudioElement;
+                      console.error('Error code:', target.error?.code);
+                      console.error('Error message:', target.error?.message);
+                    }}
+                    onLoadedMetadata={() => {
+                      console.log('Audio loaded successfully:', message.audio_url);
                     }}
                   />
 

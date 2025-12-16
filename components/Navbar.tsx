@@ -49,7 +49,7 @@ export default function Navbar() {
           { href: '/messages', label: 'Messages' },
         ]
       : [
-          { href: '/dashboard', label: 'Dashboard' },
+          { href: '/caregiver', label: 'Dashboard' },
           { href: '/messages', label: 'Messages' },
         ];
 

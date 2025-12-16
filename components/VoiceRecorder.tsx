@@ -50,7 +50,17 @@ export default function VoiceRecorder({ onRecordingComplete }: VoiceRecorderProp
 
         {audioBlob && (
           <div className="space-x-3">
-            <audio controls src={audioURL} className="h-10" />
+            <audio 
+              controls 
+              src={audioURL} 
+              className="h-10"
+              preload="metadata"
+              onError={(e) => {
+                console.error('Preview playback error:', e);
+                const target = e.target as HTMLAudioElement;
+                console.error('Error:', target.error);
+              }}
+            />
             <Button onClick={resetRecording} variant="secondary" size="sm">
               Record Again
             </Button>

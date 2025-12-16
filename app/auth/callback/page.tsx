@@ -89,6 +89,28 @@ function CallbackContent() {
       try {
         setStatus('Session found, setting up profile...');
 
+        // Get role from multiple sources (URL params, localStorage, sessionStorage)
+        let pendingRole: string | null = null;
+        if (typeof window !== 'undefined') {
+          // Try URL params first
+          const urlParams = new URLSearchParams(window.location.search);
+          const urlRole = urlParams.get('role');
+          
+          // Try localStorage second (more persistent)
+          const localRole = localStorage.getItem('pending_role');
+          
+          // Try sessionStorage third
+          const sessionRole = sessionStorage.getItem('pending_role');
+          
+          pendingRole = urlRole || localRole || sessionRole;
+          
+          console.log('Role detection:', { urlRole, localRole, sessionRole, pendingRole });
+          
+          // Clean up storage
+          localStorage.removeItem('pending_role');
+          sessionStorage.removeItem('pending_role');
+        }
+
         // Check if user profile exists
         const { data: existingUser, error: fetchError } = await supabase
           .from('users')
@@ -103,12 +125,7 @@ function CallbackContent() {
         if (!existingUser) {
           setStatus('Creating your profile...');
           
-          // Get role from sessionStorage or default
-          let role = 'elderly_user';
-          if (typeof window !== 'undefined') {
-            role = sessionStorage.getItem('pending_role') || 'elderly_user';
-            sessionStorage.removeItem('pending_role');
-          }
+          const role = pendingRole || 'elderly_user';
 
           // Create user profile
           const { error: insertError } = await supabase.from('users').insert({
@@ -120,6 +137,23 @@ function CallbackContent() {
 
           if (insertError) {
             console.error('Insert user error:', insertError);
+          } else {
+            console.log('User profile created with role:', role);
+          }
+        } else if (pendingRole && existingUser.role !== pendingRole) {
+          // User exists but signed up with different role - update it
+          setStatus('Updating your role...');
+          console.log('Updating role from', existingUser.role, 'to', pendingRole);
+          
+          const { error: updateError } = await supabase
+            .from('users')
+            .update({ role: pendingRole })
+            .eq('id', user.id);
+          
+          if (updateError) {
+            console.error('Update role error:', updateError);
+          } else {
+            console.log('Role updated to:', pendingRole);
           }
         }
 

@@ -275,16 +275,21 @@ export default function DashboardPage() {
         </>
       ) : (
         <>
-          {/* Caregiver Dashboard */}
+          {/* Caregiver - redirect to caregiver dashboard */}
           <Card>
             <div className="text-center py-8">
               <h2 className="text-2xl font-semibold mb-4">Caregiver Dashboard</h2>
               <p className="text-gray-600 mb-6">
                 View and manage your linked elderly users
               </p>
-              <Button onClick={() => router.push('/messages')}>
-                View Messages
-              </Button>
+              <div className="space-x-4">
+                <Button onClick={() => router.push('/caregiver')}>
+                  Go to Caregiver Dashboard
+                </Button>
+                <Button onClick={() => router.push('/messages')} variant="secondary">
+                  View Messages
+                </Button>
+              </div>
             </div>
           </Card>
         </>
